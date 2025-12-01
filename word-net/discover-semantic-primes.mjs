@@ -6,10 +6,14 @@
  * This script analyzes WordNet definitions to find semantic primes -
  * words that are primitive and cannot be defined using simpler terms.
  *
- * A semantic prime is identified by:
- * 1. Circular reference: A word's definition chain leads back to itself
- * 2. Self-reference: A word appears directly in its own definition
- * 3. High reference count: Words that are used frequently in definitions
+ * A semantic prime is identified by finding words that participate in
+ * circular definition chains. When tracing through definitions, if the
+ * chain eventually loops back (either to itself or through other words),
+ * ALL words in that circular path are considered semantic primes.
+ *
+ * Algorithm: Uses Tarjan's algorithm to efficiently find Strongly Connected
+ * Components (SCCs) in the word dependency graph. Words in the same SCC
+ * are mutually reachable and form circular definition chains.
  *
  * Usage: node discover-semantic-primes.mjs
  *
@@ -28,16 +32,13 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, 'data');
 const WORDNET_FILE = path.join(DATA_DIR, 'english-wordnet-2024.xml');
 const OUTPUT_FILE = path.join(DATA_DIR, 'discovered-primes.lino');
-const OUTPUT_JSON = path.join(DATA_DIR, 'discovered-primes.json');
 
 // Verbose logging flag (set via environment variable)
 const VERBOSE = process.env.VERBOSE === 'true';
 
-// Minimum occurrences in definitions to be considered
-const MIN_REFERENCE_COUNT = 100;
-
-// Maximum depth for circular reference detection
-const MAX_TRACE_DEPTH = 5;
+// Minimum SCC size for a word to be considered a semantic prime
+// Words in small SCCs (1 word = self-loop, 2 words = direct cycle) are most significant
+const MIN_SCC_SIZE = 1;
 
 function log(...args) {
   if (VERBOSE) {
@@ -47,6 +48,7 @@ function log(...args) {
 
 /**
  * Common English stop words to exclude from analysis.
+ * These are function words that don't carry semantic content.
  */
 const STOP_WORDS = new Set([
   'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
@@ -80,6 +82,7 @@ function decodeXmlEntities(str) {
 
 /**
  * Extract content words from a definition.
+ * Returns unique words that are not stop words.
  */
 function extractContentWords(definition) {
   const words = definition.toLowerCase()
@@ -92,11 +95,12 @@ function extractContentWords(definition) {
 
 /**
  * Parse WordNet XML in a single pass - memory efficient approach.
+ * Returns lemma to definitions mapping and word counts.
  */
 async function parseWordNet(filePath) {
   console.log('Parsing WordNet XML...');
 
-  const lemmaToDefinitions = new Map();  // lemma -> [definitions]
+  const lemmaToDefinitions = new Map();  // lemma -> [{definition, partOfSpeech, synsetId}]
   const definitionWordCounts = new Map(); // word -> count in definitions
   const selfReferences = new Set();       // lemmas that appear in own definitions
 
@@ -271,69 +275,124 @@ async function parseWordNet(filePath) {
 }
 
 /**
- * Find circular references for high-frequency words.
+ * Build a directed graph of word dependencies.
+ * Each edge from A to B means word A is defined using word B.
  */
-function findCircularReferences(lemmaToDefinitions, candidates) {
-  console.log('\nSearching for circular references...');
+function buildDependencyGraph(lemmaToDefinitions) {
+  console.log('\nBuilding dependency graph...');
 
-  const circularRefs = new Map();
-  let processed = 0;
+  const graph = new Map();  // word -> Set of words it depends on
 
-  for (const candidate of candidates) {
-    const word = candidate.word;
-    const definitions = lemmaToDefinitions.get(word) || [];
+  for (const [lemma, defs] of lemmaToDefinitions) {
+    const dependencies = new Set();
 
-    for (const { definition } of definitions) {
-      const contentWords = extractContentWords(definition);
-
-      // Check each word in the definition
-      for (const defWord of contentWords) {
-        if (defWord === word) continue; // Skip self-reference (already tracked)
-
-        // Check if defWord's definitions refer back to word
-        const defWordDefs = lemmaToDefinitions.get(defWord) || [];
-        for (const { definition: subDef } of defWordDefs) {
-          const subWords = extractContentWords(subDef);
-          if (subWords.includes(word)) {
-            if (!circularRefs.has(word)) {
-              circularRefs.set(word, []);
-            }
-            circularRefs.get(word).push({
-              intermediateWord: defWord,
-              depth: 2,
-            });
-            break;
-          }
-
-          // Check one more level deep (depth 3)
-          for (const subWord of subWords) {
-            if (subWord === word || subWord === defWord) continue;
-            const subSubDefs = lemmaToDefinitions.get(subWord) || [];
-            for (const { definition: subSubDef } of subSubDefs) {
-              if (extractContentWords(subSubDef).includes(word)) {
-                if (!circularRefs.has(word)) {
-                  circularRefs.set(word, []);
-                }
-                circularRefs.get(word).push({
-                  path: [defWord, subWord],
-                  depth: 3,
-                });
-                break;
-              }
-            }
-          }
+    for (const def of defs) {
+      const contentWords = extractContentWords(def.definition);
+      for (const word of contentWords) {
+        if (lemmaToDefinitions.has(word)) {
+          dependencies.add(word);
         }
       }
     }
 
-    processed++;
-    if (processed % 100 === 0) {
-      console.log(`  Processed ${processed}/${candidates.length} candidates...`);
+    graph.set(lemma, dependencies);
+  }
+
+  console.log(`  Graph nodes: ${graph.size}`);
+  let edgeCount = 0;
+  for (const deps of graph.values()) {
+    edgeCount += deps.size;
+  }
+  console.log(`  Graph edges: ${edgeCount}`);
+
+  return graph;
+}
+
+/**
+ * Find Strongly Connected Components using Tarjan's algorithm.
+ * SCCs represent groups of words that form circular definition chains.
+ */
+function findSCCs(graph) {
+  console.log('\nFinding strongly connected components (SCCs)...');
+
+  const indices = new Map();
+  const lowlinks = new Map();
+  const onStack = new Set();
+  const stack = [];
+  const sccs = [];
+  let index = 0;
+
+  function strongConnect(v) {
+    indices.set(v, index);
+    lowlinks.set(v, index);
+    index++;
+    stack.push(v);
+    onStack.add(v);
+
+    const neighbors = graph.get(v) || new Set();
+    for (const w of neighbors) {
+      if (!indices.has(w)) {
+        strongConnect(w);
+        lowlinks.set(v, Math.min(lowlinks.get(v), lowlinks.get(w)));
+      } else if (onStack.has(w)) {
+        lowlinks.set(v, Math.min(lowlinks.get(v), indices.get(w)));
+      }
+    }
+
+    // If v is a root node, pop the stack and generate an SCC
+    if (lowlinks.get(v) === indices.get(v)) {
+      const scc = [];
+      let w;
+      do {
+        w = stack.pop();
+        onStack.delete(w);
+        scc.push(w);
+      } while (w !== v);
+      sccs.push(scc);
     }
   }
 
-  console.log(`  Words with circular references: ${circularRefs.size}`);
-  return circularRefs;
+  let processed = 0;
+  const total = graph.size;
+  for (const v of graph.keys()) {
+    if (!indices.has(v)) {
+      strongConnect(v);
+    }
+    processed++;
+    if (processed % 50000 === 0) {
+      console.log(`  Processed ${processed}/${total} nodes (${(processed / total * 100).toFixed(1)}%)...`);
+    }
+  }
+
+  console.log(`  Total SCCs found: ${sccs.length}`);
+
+  // Analyze SCC sizes
+  const sccSizes = new Map();
+  for (const scc of sccs) {
+    const size = scc.length;
+    sccSizes.set(size, (sccSizes.get(size) || 0) + 1);
+  }
+
+  const nonTrivialSccs = sccs.filter(scc => scc.length >= MIN_SCC_SIZE);
+  console.log(`  Non-trivial SCCs (size >= ${MIN_SCC_SIZE}): ${nonTrivialSccs.length}`);
+
+  // Count words in cycles (SCCs with size > 1 or self-loops)
+  let wordsInCycles = 0;
+  for (const scc of sccs) {
+    if (scc.length > 1) {
+      wordsInCycles += scc.length;
+    } else {
+      // Check for self-loop
+      const word = scc[0];
+      const deps = graph.get(word) || new Set();
+      if (deps.has(word)) {
+        wordsInCycles++;
+      }
+    }
+  }
+  console.log(`  Words in circular definitions: ${wordsInCycles}`);
+
+  return sccs;
 }
 
 /**
@@ -348,30 +407,39 @@ function escapeForLino(str) {
 }
 
 /**
- * Calculate prime score for a word.
+ * Calculate prime score for a word based on multiple factors.
  */
-function calculatePrimeScore(word, refCount, isSelfRef, circularRefs) {
+function calculatePrimeScore(word, sccSize, hasSelfLoop, refCount, isSelfRef, isInCycle) {
   let score = 0;
 
-  // Reference count (log scale)
-  score += Math.log10(refCount) * 15;
-
-  // Self-reference
-  if (isSelfRef) {
-    score += 40;
+  // Being in a cycle is the primary indicator
+  if (isInCycle) {
+    score += 50;
   }
 
-  // Circular references
-  if (circularRefs) {
+  // SCC size (larger SCCs = more fundamental concepts interconnected)
+  if (sccSize > 1) {
+    score += Math.min(Math.log10(sccSize) * 15, 30);
+  }
+
+  // Self-loop (word appears in own definition)
+  if (hasSelfLoop) {
+    score += 30;
+  }
+
+  // Self-reference (checked separately from self-loop)
+  if (isSelfRef) {
     score += 20;
-    // Shorter circular paths are more significant
-    const shortestDepth = Math.min(...circularRefs.map(r => r.depth));
-    score += (5 - shortestDepth) * 10;
+  }
+
+  // Reference count (words used more in definitions are more fundamental)
+  if (refCount) {
+    score += Math.log10(refCount) * 8;
   }
 
   // Short words are often more primitive
   if (word.length <= 4) {
-    score += 15;
+    score += 10;
   } else if (word.length <= 6) {
     score += 5;
   }
@@ -380,74 +448,105 @@ function calculatePrimeScore(word, refCount, isSelfRef, circularRefs) {
 }
 
 /**
- * Convert candidates to Links Notation format.
+ * Convert discovered primes to Links Notation format.
  */
-function toLinksNotation(candidates) {
+function toLinksNotation(primes) {
   const lines = [];
 
   lines.push('// Semantic Primes discovered algorithmically from Open English WordNet 2024');
-  lines.push('// Method: Definition chain analysis - finding circular and self-references');
+  lines.push('// Method: Tarjan\'s algorithm for Strongly Connected Components (SCCs)');
+  lines.push('//');
   lines.push('// A semantic prime is a word that cannot be defined without eventually');
-  lines.push('// referring back to itself (directly or through other words)');
+  lines.push('// referring back to itself (directly or through other words).');
+  lines.push('//');
+  lines.push('// Words in the same SCC form mutual circular definitions - they can all');
+  lines.push('// reach each other through definition chains, making them all semantic primes.');
+  lines.push('//');
   lines.push(`// Generated: ${new Date().toISOString()}`);
-  lines.push('');
-  lines.push(`// Total prime candidates: ${candidates.length}`);
+  lines.push(`// Total semantic primes discovered: ${primes.length}`);
   lines.push('');
 
-  // Group by confidence
-  const highConfidence = candidates.filter(c => c.primeScore >= 70);
-  const mediumConfidence = candidates.filter(c => c.primeScore >= 50 && c.primeScore < 70);
-  const lowerConfidence = candidates.filter(c => c.primeScore >= 30 && c.primeScore < 50);
+  // Group by confidence score ranges
+  const highConfidence = primes.filter(p => p.primeScore >= 80);
+  const mediumConfidence = primes.filter(p => p.primeScore >= 50 && p.primeScore < 80);
+  const lowerConfidence = primes.filter(p => p.primeScore >= 30 && p.primeScore < 50);
+  const candidates = primes.filter(p => p.primeScore < 30);
 
-  lines.push('// === HIGH CONFIDENCE PRIMES (score >= 70) ===');
+  lines.push('// === HIGH CONFIDENCE PRIMES (score >= 80) ===');
   lines.push(`// Count: ${highConfidence.length}`);
   lines.push('');
-  for (const c of highConfidence) {
-    addCandidateToLino(lines, c);
+  for (const p of highConfidence) {
+    addPrimeToLino(lines, p);
   }
 
   lines.push('');
-  lines.push('// === MEDIUM CONFIDENCE PRIMES (50 <= score < 70) ===');
+  lines.push('// === MEDIUM CONFIDENCE PRIMES (50 <= score < 80) ===');
   lines.push(`// Count: ${mediumConfidence.length}`);
   lines.push('');
-  for (const c of mediumConfidence) {
-    addCandidateToLino(lines, c);
+  for (const p of mediumConfidence) {
+    addPrimeToLino(lines, p);
   }
 
   lines.push('');
-  lines.push('// === CANDIDATES (30 <= score < 50) ===');
+  lines.push('// === LOWER CONFIDENCE PRIMES (30 <= score < 50) ===');
   lines.push(`// Count: ${lowerConfidence.length}`);
   lines.push('');
-  for (const c of lowerConfidence) {
-    addCandidateToLino(lines, c);
+  for (const p of lowerConfidence) {
+    addPrimeToLino(lines, p);
+  }
+
+  if (candidates.length > 0) {
+    lines.push('');
+    lines.push('// === CANDIDATES (score < 30) ===');
+    lines.push(`// Count: ${candidates.length}`);
+    lines.push('');
+    for (const p of candidates) {
+      addPrimeToLino(lines, p);
+    }
   }
 
   return lines.join('\n');
 }
 
-function addCandidateToLino(lines, candidate) {
-  const wordId = candidate.word.replace(/[^a-z0-9]/gi, '_');
+function addPrimeToLino(lines, prime) {
+  const wordId = prime.word.replace(/[^a-z0-9]/gi, '_');
 
   lines.push(`(${wordId} isa discovered_semantic_prime)`);
-  lines.push(`(${wordId} prime_score ${candidate.primeScore.toFixed(1)})`);
-  lines.push(`(${wordId} reference_count ${candidate.referenceCount})`);
+  lines.push(`(${wordId} prime_score ${prime.primeScore.toFixed(1)})`);
 
-  if (candidate.isSelfReference) {
+  if (prime.isInCycle) {
+    lines.push(`(${wordId} in_circular_definition true)`);
+  }
+
+  if (prime.sccSize > 1) {
+    lines.push(`(${wordId} scc_size ${prime.sccSize})`);
+  }
+
+  if (prime.hasSelfLoop) {
+    lines.push(`(${wordId} has_self_loop true)`);
+  }
+
+  if (prime.referenceCount) {
+    lines.push(`(${wordId} reference_count ${prime.referenceCount})`);
+  }
+
+  if (prime.isSelfReference) {
     lines.push(`(${wordId} has_self_reference true)`);
   }
 
-  if (candidate.hasCircularReference) {
-    lines.push(`(${wordId} has_circular_reference true)`);
-    lines.push(`(${wordId} circular_ref_count ${candidate.circularRefCount})`);
-  }
-
-  if (candidate.definition) {
-    const defText = escapeForLino(candidate.definition.substring(0, 200));
+  if (prime.definition) {
+    const defText = escapeForLino(prime.definition.substring(0, 200));
     lines.push(`(${wordId} definition "${defText}")`);
   }
 
-  if (candidate.partOfSpeech) {
-    lines.push(`(${wordId} pos ${candidate.partOfSpeech})`);
+  if (prime.partOfSpeech) {
+    lines.push(`(${wordId} pos ${prime.partOfSpeech})`);
+  }
+
+  // Add sample SCC members if in a multi-word SCC
+  if (prime.sccSample && prime.sccSample.length > 1) {
+    const sample = prime.sccSample.slice(0, 5).join(', ');
+    lines.push(`(${wordId} scc_sample "${escapeForLino(sample)}")`);
   }
 
   lines.push('');
@@ -458,7 +557,7 @@ function addCandidateToLino(lines, candidate) {
  */
 async function main() {
   console.log('=== Semantic Primes Discovery Script ===');
-  console.log('Finding primitive words through definition chain analysis\n');
+  console.log('Finding primitive words through SCC analysis of definition chains\n');
 
   if (!existsSync(WORDNET_FILE)) {
     console.error(`Error: WordNet data file not found: ${WORDNET_FILE}`);
@@ -470,87 +569,97 @@ async function main() {
   const { lemmaToDefinitions, definitionWordCounts, selfReferences } =
     await parseWordNet(WORDNET_FILE);
 
-  // Get candidate words (high reference count)
-  console.log('\nIdentifying prime candidates...');
-  const sortedWords = [...definitionWordCounts.entries()]
-    .filter(([word, count]) => count >= MIN_REFERENCE_COUNT)
-    .filter(([word]) => lemmaToDefinitions.has(word))  // Must have own definition
-    .sort((a, b) => b[1] - a[1]);
+  // Build dependency graph
+  const graph = buildDependencyGraph(lemmaToDefinitions);
 
-  console.log(`  Words with ${MIN_REFERENCE_COUNT}+ references: ${sortedWords.length}`);
+  // Find SCCs
+  const sccs = findSCCs(graph);
 
-  // Build initial candidates
-  const candidates = sortedWords.map(([word, count]) => ({
-    word,
-    referenceCount: count,
-    isSelfReference: selfReferences.has(word),
-    hasCircularReference: false,
-    circularRefCount: 0,
-    definition: null,
-    partOfSpeech: null,
-  }));
-
-  // Add definitions
-  for (const c of candidates) {
-    const defs = lemmaToDefinitions.get(c.word);
-    if (defs && defs.length > 0) {
-      c.definition = defs[0].definition;
-      c.partOfSpeech = defs[0].partOfSpeech;
+  // Build map of word -> SCC info
+  console.log('\nBuilding prime candidates list...');
+  const wordToSCC = new Map();
+  for (const scc of sccs) {
+    for (const word of scc) {
+      wordToSCC.set(word, scc);
     }
   }
 
-  // Find circular references
-  const circularRefs = findCircularReferences(lemmaToDefinitions, candidates);
+  // Build list of discovered primes
+  const primes = [];
 
-  // Update candidates with circular reference info
-  for (const c of candidates) {
-    const refs = circularRefs.get(c.word);
-    if (refs && refs.length > 0) {
-      c.hasCircularReference = true;
-      c.circularRefCount = refs.length;
-    }
-  }
+  for (const [word, scc] of wordToSCC) {
+    // Check if this word is in a cycle
+    const hasSelfLoop = (graph.get(word) || new Set()).has(word);
+    const isInCycle = scc.length > 1 || hasSelfLoop;
 
-  // Calculate scores
-  for (const c of candidates) {
-    c.primeScore = calculatePrimeScore(
-      c.word,
-      c.referenceCount,
-      c.isSelfReference,
-      circularRefs.get(c.word)
-    );
+    // Only include words that are in cycles (this is the definition of semantic prime)
+    if (!isInCycle) continue;
+
+    const defs = lemmaToDefinitions.get(word);
+    const firstDef = defs && defs.length > 0 ? defs[0] : null;
+
+    const prime = {
+      word,
+      primeScore: calculatePrimeScore(
+        word,
+        scc.length,
+        hasSelfLoop,
+        definitionWordCounts.get(word),
+        selfReferences.has(word),
+        isInCycle
+      ),
+      sccSize: scc.length,
+      sccSample: scc.slice(0, 10),
+      hasSelfLoop,
+      isInCycle,
+      referenceCount: definitionWordCounts.get(word) || 0,
+      isSelfReference: selfReferences.has(word),
+      definition: firstDef?.definition,
+      partOfSpeech: firstDef?.partOfSpeech,
+    };
+
+    primes.push(prime);
   }
 
   // Sort by score
-  candidates.sort((a, b) => b.primeScore - a.primeScore);
+  primes.sort((a, b) => b.primeScore - a.primeScore);
+
+  console.log(`  Total primes discovered: ${primes.length}`);
+
+  // Check for key words that should be primes
+  const keyWords = ['entity', 'thing', 'being', 'time', 'body', 'make', 'existence', 'person'];
+  console.log('\n  Key word verification:');
+  for (const kw of keyWords) {
+    const found = primes.find(p => p.word === kw);
+    if (found) {
+      console.log(`    ${kw}: FOUND (score=${found.primeScore.toFixed(1)}, scc_size=${found.sccSize})`);
+    } else {
+      // Check if it's in graph but not in cycle
+      if (graph.has(kw)) {
+        const scc = wordToSCC.get(kw);
+        const hasSelfLoop = (graph.get(kw) || new Set()).has(kw);
+        console.log(`    ${kw}: NOT IN CYCLE (scc_size=${scc?.length || 0}, self_loop=${hasSelfLoop})`);
+      } else {
+        console.log(`    ${kw}: NOT IN GRAPH`);
+      }
+    }
+  }
 
   // Print top results
-  console.log('\nTop 30 semantic prime candidates:');
-  for (const c of candidates.slice(0, 30)) {
+  console.log('\nTop 30 semantic primes:');
+  for (const p of primes.slice(0, 30)) {
     const flags = [];
-    if (c.isSelfReference) flags.push('self-ref');
-    if (c.hasCircularReference) flags.push(`circular(${c.circularRefCount})`);
-    console.log(`  ${c.word}: score=${c.primeScore.toFixed(1)}, refs=${c.referenceCount} ${flags.join(', ')}`);
+    if (p.hasSelfLoop) flags.push('self-loop');
+    if (p.isSelfReference) flags.push('self-ref');
+    flags.push(`scc=${p.sccSize}`);
+    console.log(`  ${p.word}: score=${p.primeScore.toFixed(1)}, refs=${p.referenceCount} ${flags.join(', ')}`);
   }
 
   // Generate output
   console.log('\nGenerating output...');
-  const linoOutput = toLinksNotation(candidates);
+  const linoOutput = toLinksNotation(primes);
   writeFileSync(OUTPUT_FILE, linoOutput);
   console.log(`Links Notation output saved to: ${OUTPUT_FILE}`);
-
-  // Save JSON (without full definitions for smaller size)
-  const jsonOutput = candidates.map(c => ({
-    word: c.word,
-    primeScore: c.primeScore,
-    referenceCount: c.referenceCount,
-    isSelfReference: c.isSelfReference,
-    hasCircularReference: c.hasCircularReference,
-    circularRefCount: c.circularRefCount,
-    partOfSpeech: c.partOfSpeech,
-  }));
-  writeFileSync(OUTPUT_JSON, JSON.stringify(jsonOutput, null, 2));
-  console.log(`JSON output saved to: ${OUTPUT_JSON}`);
 
   console.log('\nDiscovery complete!');
 }

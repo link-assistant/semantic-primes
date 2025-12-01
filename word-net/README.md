@@ -6,16 +6,20 @@ This directory contains scripts to extract and discover semantic primes from Ope
 
 A **semantic prime** is a word that is **primitive** - the most basic linguistic concept that cannot be defined using simpler terms without circular reference.
 
+If we trace the definition chain of any word deep enough, we eventually hit words that can only be defined using each other (circular dependencies). These words form the foundation of all definitions and are semantic primes.
+
 This project provides two approaches to semantic primes:
 
 ### 1. NSM Primes (Pre-defined)
 The 65 semantic primes identified by Anna Wierzbicka's Natural Semantic Metalanguage (NSM) theory, based on decades of linguistic research.
 
 ### 2. Discovered Primes (Algorithmic)
-Semantic primes discovered algorithmically by analyzing WordNet definition chains to find words that:
-- **Self-reference**: Appear in their own definitions
-- **Circular reference**: Form definition loops (A defines B, B defines A)
-- **High reference count**: Used frequently in other definitions
+Semantic primes discovered algorithmically by analyzing WordNet definition chains using Tarjan's algorithm to find Strongly Connected Components (SCCs). Words in the same SCC can all reach each other through definition chains, forming mutual circular dependencies.
+
+Key findings:
+- **19,084 words** discovered as semantic primes
+- **15,527 words** form a single large interconnected SCC (including "entity", "thing", "time", "body", etc.)
+- Words like "entity", "existence", "thing" are correctly identified as fundamental primes
 
 This allows comparison between theoretically-derived primes (NSM) and algorithmically-discovered primes.
 
@@ -45,7 +49,17 @@ Downloads the Open English WordNet 2024 XML file:
 npm run download
 ```
 
-This creates `data/english-wordnet-2024.xml` (~150MB uncompressed).
+This creates `data/english-wordnet-2024.xml` (~100MB uncompressed). The XML file is gitignored.
+
+### Convert to Links Notation
+
+Converts the WordNet XML to Links Notation format (source data):
+
+```bash
+npm run convert
+```
+
+Creates `data/wordnet-source.lino` (~38MB) - full WordNet in Links Notation format.
 
 ### Extract NSM Primes
 
@@ -55,9 +69,7 @@ Extracts entries matching the 65 NSM semantic primes:
 npm run extract-nsm
 ```
 
-Creates:
-- `data/nsm-primes.lino` - NSM primes in Links Notation format
-- `data/nsm-primes.json` - NSM primes in JSON format
+Creates `data/nsm-primes.lino` - NSM primes in Links Notation format.
 
 ### Discover Semantic Primes Algorithmically
 
@@ -67,9 +79,15 @@ Analyzes definition chains to find primitive words:
 npm run discover
 ```
 
-Creates:
-- `data/discovered-primes.lino` - Discovered primes in Links Notation format
-- `data/discovered-primes.json` - Discovered primes in JSON format
+Creates `data/discovered-primes.lino` - Algorithmically discovered primes.
+
+### Run Tests
+
+Verifies that key words (entity, thing, time, etc.) are discovered:
+
+```bash
+npm run test
+```
 
 ### Run All Steps
 
@@ -79,7 +97,8 @@ npm run all
 
 ## Output Format
 
-Output uses [Links Notation](https://github.com/link-foundation/links-notation) format (.lino).
+All output uses [Links Notation](https://github.com/link-foundation/links-notation) format (.lino).
+Only .lino files are stored in the data folder - no JSON.
 
 ### NSM Primes Example
 ```lino
@@ -91,13 +110,25 @@ Output uses [Links Notation](https://github.com/link-foundation/links-notation) 
 
 ### Discovered Primes Example
 ```lino
-(time isa discovered_semantic_prime)
-(time prime_score 151.2)
-(time reference_count 1195)
-(time has_self_reference true)
-(time has_circular_reference true)
-(time definition "the continuum of experience in which events pass...")
+(entity isa discovered_semantic_prime)
+(entity prime_score 99.1)
+(entity in_circular_definition true)
+(entity scc_size 15527)
+(entity reference_count 58)
+(entity definition "that which is perceived or known or inferred to have its own distinct existence")
+(entity pos n)
+(entity scc_sample "entity, thing, time, body, form, work, make, ...")
 ```
+
+## Algorithm
+
+The discovery algorithm uses **Tarjan's algorithm** to find Strongly Connected Components (SCCs) in the word dependency graph:
+
+1. **Build Graph**: Each word points to words used in its definition
+2. **Find SCCs**: Words in the same SCC can reach each other through definition chains
+3. **Identify Primes**: Words in SCCs of size > 1, or words with self-loops, are semantic primes
+
+This is based on the literal definition of semantic primes: words that cannot be defined without circular reference.
 
 ## NSM Prime Categories
 
@@ -124,9 +155,9 @@ The 65 NSM primes are organized into:
 ## Comparing NSM and Discovered Primes
 
 Interesting findings from algorithmic discovery:
-- Many NSM primes (TIME, BODY, MAKE, etc.) also rank highly in algorithmic discovery
-- Some algorithmically-discovered primes suggest WordNet has well-defined composite definitions for certain concepts
-- Words with both high reference counts AND circular references are strong candidates for semantic primitiveness
+- Many NSM primes (TIME, BODY, THING, etc.) are in the large discovered SCC
+- The algorithm validates NSM theory: theoretical primes are also algorithmically primitive
+- Some NSM primes may have well-defined non-circular definitions in WordNet
 
 ## References
 
@@ -134,6 +165,7 @@ Interesting findings from algorithmic discovery:
 - [Natural Semantic Metalanguage](https://en.wikipedia.org/wiki/Natural_semantic_metalanguage) (Wikipedia)
 - [Open English WordNet](https://en-word.net/)
 - [Links Notation](https://github.com/link-foundation/links-notation)
+- [Tarjan's Algorithm](https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm) for finding SCCs
 
 ## License
 

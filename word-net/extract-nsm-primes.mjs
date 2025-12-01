@@ -33,7 +33,6 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, 'data');
 const WORDNET_FILE = path.join(DATA_DIR, 'english-wordnet-2024.xml');
 const OUTPUT_FILE = path.join(DATA_DIR, 'nsm-primes.lino');
-const OUTPUT_JSON = path.join(DATA_DIR, 'nsm-primes.json');
 
 // Verbose logging flag (set via environment variable)
 const VERBOSE = process.env.VERBOSE === 'true';
@@ -412,13 +411,9 @@ async function main() {
   console.log('\nGenerating Links Notation output...');
   const linoOutput = toLinksNotation(matches);
 
-  // Save output files
+  // Save output file
   writeFileSync(OUTPUT_FILE, linoOutput);
   console.log(`Links Notation output saved to: ${OUTPUT_FILE}`);
-
-  // Also save JSON for reference
-  writeFileSync(OUTPUT_JSON, JSON.stringify(matches, null, 2));
-  console.log(`JSON output saved to: ${OUTPUT_JSON}`);
 
   console.log('\nExtraction complete!');
 }

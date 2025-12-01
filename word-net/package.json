@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "download": "node download.mjs",
+    "convert": "node convert-wordnet-to-lino.mjs",
     "extract-nsm": "node extract-nsm-primes.mjs",
     "discover": "node discover-semantic-primes.mjs",
-    "all": "npm run download && npm run extract-nsm && npm run discover"
+    "test": "node test-discovery.mjs",
+    "all": "npm run download && npm run convert && npm run extract-nsm && npm run discover && npm run test"
   },
   "keywords": [
     "semantic-primes",
