@@ -1,13 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * Extract Semantic Primes from WordNet
+ * Extract NSM (Natural Semantic Metalanguage) Primes from WordNet
  *
  * This script parses the Open English WordNet XML file and extracts
- * entries that correspond to semantic primes (based on NSM theory).
+ * entries that correspond to the 65 semantic primes defined by
+ * Anna Wierzbicka's NSM theory.
+ *
+ * These are pre-defined primes from linguistic research, NOT algorithmically
+ * discovered. For algorithmic discovery of semantic primes, see discover-semantic-primes.mjs.
+ *
+ * Reference: Wierzbicka, A. (1996). Semantics: Primes and universals.
+ *
  * Results are output in Links Notation (.lino) format.
  *
- * Usage: node extract-semantic-primes.mjs
+ * Usage: node extract-nsm-primes.mjs
  *
  * Requirements: Run download.mjs first to get the WordNet data.
  */
@@ -25,8 +32,8 @@ const __dirname = path.dirname(__filename);
 // Configuration
 const DATA_DIR = path.join(__dirname, 'data');
 const WORDNET_FILE = path.join(DATA_DIR, 'english-wordnet-2024.xml');
-const OUTPUT_FILE = path.join(DATA_DIR, 'semantic-primes.lino');
-const OUTPUT_JSON = path.join(DATA_DIR, 'semantic-primes.json');
+const OUTPUT_FILE = path.join(DATA_DIR, 'nsm-primes.lino');
+const OUTPUT_JSON = path.join(DATA_DIR, 'nsm-primes.json');
 
 // Verbose logging flag (set via environment variable)
 const VERBOSE = process.env.VERBOSE === 'true';
@@ -273,8 +280,9 @@ function toLinksNotation(matches) {
   const lines = [];
 
   // Header comment
-  lines.push('// Semantic Primes extracted from Open English WordNet 2024');
-  lines.push('// Based on Natural Semantic Metalanguage (NSM) theory');
+  lines.push('// NSM Semantic Primes extracted from Open English WordNet 2024');
+  lines.push('// Based on Natural Semantic Metalanguage (NSM) theory by Anna Wierzbicka');
+  lines.push('// These are pre-defined primes from linguistic research');
   lines.push('// Reference: Wierzbicka, A. (1996). Semantics: Primes and universals.');
   lines.push('');
 
