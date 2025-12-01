@@ -138,9 +138,8 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# WordNet data files (too large for git, generate using npm run scripts)
+# WordNet data files (XML source too large for git, generate using npm run download)
 word-net/data/english-wordnet-*.xml
-word-net/data/wordnet-source.lino
 word-net/package-lock.json
 
 # Experiment output files
