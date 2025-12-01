@@ -15,12 +15,17 @@
  * Components (SCCs) in the word dependency graph. Words in the same SCC
  * are mutually reachable and form circular definition chains.
  *
- * Usage: node discover-semantic-primes.mjs
+ * Usage: node discover-semantic-primes.mjs [options]
+ *
+ * Options:
+ *   --stop-words=<file>  Use stop words from file (one word per line)
+ *   --use-default-stop-words  Use built-in stop words list
+ *   (no flag)            No stop words (default) - analyze all words
  *
  * Requirements: Run download.mjs first to get the WordNet data.
  */
 
-import { createReadStream, existsSync, writeFileSync } from 'fs';
+import { createReadStream, existsSync, writeFileSync, readFileSync } from 'fs';
 import { createInterface } from 'readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -47,10 +52,12 @@ function log(...args) {
 }
 
 /**
- * Common English stop words to exclude from analysis.
- * These are function words that don't carry semantic content.
+ * Default English stop words that can optionally be excluded from analysis.
+ * These are function words that typically don't carry semantic content.
+ * By default, NO stop words are used - all words are analyzed.
+ * Use --use-default-stop-words to enable these, or --stop-words=<file> for custom list.
  */
-const STOP_WORDS = new Set([
+const DEFAULT_STOP_WORDS = [
   'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
   'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
   'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used',
@@ -66,7 +73,49 @@ const STOP_WORDS = new Set([
   'some', 'one', 'two', 'first', 'new', 'now', 'way', 'well', 'then',
   'usually', 'especially', 'particularly', 'generally', 'typically',
   'sometimes', 'followed', 'something', 'someone', 'anything', 'anyone',
-]);
+];
+
+/**
+ * Parse command line arguments for stop words configuration.
+ * Returns a Set of stop words to use (empty by default).
+ */
+function parseStopWordsConfig() {
+  const args = process.argv.slice(2);
+
+  // Check for --use-default-stop-words flag
+  if (args.includes('--use-default-stop-words')) {
+    console.log('Using default stop words list');
+    return new Set(DEFAULT_STOP_WORDS);
+  }
+
+  // Check for --stop-words=<file> argument
+  const stopWordsArg = args.find(arg => arg.startsWith('--stop-words='));
+  if (stopWordsArg) {
+    const filePath = stopWordsArg.replace('--stop-words=', '');
+    const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
+
+    if (!existsSync(absolutePath)) {
+      console.error(`Error: Stop words file not found: ${absolutePath}`);
+      process.exit(1);
+    }
+
+    const content = readFileSync(absolutePath, 'utf-8');
+    const words = content
+      .split('\n')
+      .map(line => line.trim().toLowerCase())
+      .filter(line => line.length > 0 && !line.startsWith('#'));
+
+    console.log(`Using ${words.length} stop words from: ${absolutePath}`);
+    return new Set(words);
+  }
+
+  // Default: no stop words - analyze all words
+  console.log('No stop words configured - analyzing all words (including a, of, the, etc.)');
+  return new Set();
+}
+
+// Parse stop words configuration
+const STOP_WORDS = parseStopWordsConfig();
 
 /**
  * Decode XML entities.
