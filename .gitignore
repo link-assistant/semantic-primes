@@ -137,3 +137,7 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# WordNet data files (too large for git, download using npm run download)
+word-net/data/english-wordnet-*.xml
+word-net/package-lock.json

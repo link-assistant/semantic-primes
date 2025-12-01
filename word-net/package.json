@@ -1,0 +1,21 @@
+{
+  "name": "semantic-primes-extractor",
+  "version": "1.0.0",
+  "description": "Extract semantic primes from WordNet using Links Notation",
+  "type": "module",
+  "scripts": {
+    "download": "node download.mjs",
+    "extract": "node extract-semantic-primes.mjs",
+    "all": "npm run download && npm run extract"
+  },
+  "keywords": [
+    "semantic-primes",
+    "wordnet",
+    "nsm",
+    "links-notation"
+  ],
+  "license": "Unlicense",
+  "dependencies": {
+    "links-notation": "^0.12.0"
+  }
+}
