@@ -142,3 +142,6 @@ vite.config.ts.timestamp-*
 word-net/data/english-wordnet-*.xml
 word-net/data/wordnet-source.lino
 word-net/package-lock.json
+
+# Experiment output files
+word-net/experiments/*.json
