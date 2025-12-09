@@ -21,7 +21,7 @@ const __dirname = path.dirname(__filename);
 
 // Configuration
 const WORDNET_URL = 'https://en-word.net/static/english-wordnet-2024.xml.gz';
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = path.join(__dirname, '..', 'data');
 const OUTPUT_FILE = path.join(DATA_DIR, 'english-wordnet-2024.xml');
 
 /**

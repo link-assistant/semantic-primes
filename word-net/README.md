@@ -2,6 +2,29 @@
 
 This directory contains scripts to extract and discover semantic primes from Open English WordNet.
 
+## Project Structure
+
+```
+word-net/
+├── scripts/              # Production scripts (used repeatedly)
+│   ├── download.mjs           # Download WordNet XML data
+│   ├── convert-wordnet-to-lino.mjs  # Convert XML to Links Notation
+│   ├── extract-nsm-primes.mjs       # Extract NSM primes
+│   ├── discover-semantic-primes.mjs # Discover primes algorithmically
+│   └── semantic-primes.mjs          # NSM primes definitions module
+├── experiments/          # Development experiments (kept for code reuse)
+│   ├── analyze-entity.mjs     # Analyze why specific words are primes
+│   └── trace-circularity.mjs  # Trace definition chain circularity
+├── tests/                # Test scripts
+│   └── test-discovery.mjs     # Verify discovery works correctly
+├── data/                 # Output data files (.lino only)
+│   ├── discovered-primes.lino      # Algorithmically discovered primes
+│   ├── nsm-primes.lino             # NSM primes with WordNet mappings
+│   └── wordnet-source.lino         # Converted WordNet source data
+├── package.json
+└── README.md
+```
+
 ## What are Semantic Primes?
 
 A **semantic prime** is a word that is **primitive** - the most basic linguistic concept that cannot be defined using simpler terms without circular reference.
