@@ -21,7 +21,6 @@ word-net/
 │   ├── discovered-primes.lino      # Algorithmically discovered primes
 │   ├── nsm-primes.lino             # NSM primes with WordNet mappings
 │   └── wordnet-source.lino         # Converted WordNet source data
-├── package.json
 └── README.md
 ```
 
@@ -53,14 +52,8 @@ This allows comparison between theoretically-derived primes (NSM) and algorithmi
 ## Prerequisites
 
 - Node.js 18+
-- npm
 
-## Installation
-
-```bash
-cd word-net
-npm install
-```
+All scripts use only Node.js built-in modules - no external dependencies or package installation required.
 
 ## Usage
 
@@ -69,7 +62,7 @@ npm install
 Downloads the Open English WordNet 2024 XML file:
 
 ```bash
-npm run download
+node scripts/download.mjs
 ```
 
 This creates `data/english-wordnet-2024.xml` (~100MB uncompressed). The XML file is gitignored.
@@ -79,7 +72,7 @@ This creates `data/english-wordnet-2024.xml` (~100MB uncompressed). The XML file
 Converts the WordNet XML to Links Notation format (source data):
 
 ```bash
-npm run convert
+node scripts/convert-wordnet-to-lino.mjs
 ```
 
 Creates `data/wordnet-source.lino` (~38MB) - full WordNet in Links Notation format.
@@ -89,7 +82,7 @@ Creates `data/wordnet-source.lino` (~38MB) - full WordNet in Links Notation form
 Extracts entries matching the 65 NSM semantic primes:
 
 ```bash
-npm run extract-nsm
+node scripts/extract-nsm-primes.mjs
 ```
 
 Creates `data/nsm-primes.lino` - NSM primes in Links Notation format.
@@ -99,7 +92,7 @@ Creates `data/nsm-primes.lino` - NSM primes in Links Notation format.
 Analyzes definition chains to find primitive words:
 
 ```bash
-npm run discover
+node scripts/discover-semantic-primes.mjs
 ```
 
 Creates `data/discovered-primes.lino` - Algorithmically discovered primes.
@@ -109,13 +102,17 @@ Creates `data/discovered-primes.lino` - Algorithmically discovered primes.
 Verifies that key words (entity, thing, time, etc.) are discovered:
 
 ```bash
-npm run test
+node tests/test-all.mjs
 ```
 
 ### Run All Steps
 
 ```bash
-npm run all
+node scripts/download.mjs && \
+node scripts/convert-wordnet-to-lino.mjs && \
+node scripts/extract-nsm-primes.mjs && \
+node scripts/discover-semantic-primes.mjs && \
+node tests/test-all.mjs
 ```
 
 ## Output Format

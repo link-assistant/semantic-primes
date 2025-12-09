@@ -23,7 +23,6 @@ import { createReadStream, existsSync, writeFileSync } from 'fs';
 import { createInterface } from 'readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Parser, Link } from 'links-notation';
 import { getAllPrimes, SEMANTIC_PRIMES } from './semantic-primes.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -376,7 +375,7 @@ async function main() {
   // Check if WordNet data exists
   if (!existsSync(WORDNET_FILE)) {
     console.error(`Error: WordNet data file not found: ${WORDNET_FILE}`);
-    console.error('Please run "npm run download" first to download the data.');
+    console.error('Please run "node scripts/download.mjs" first to download the data.');
     process.exit(1);
   }
 
