@@ -1,0 +1,28 @@
+{
+  "name": "semantic-primes-extractor",
+  "version": "1.3.0",
+  "description": "Extract and discover semantic primes from WordNet using Links Notation",
+  "type": "module",
+  "scripts": {
+    "download": "node scripts/download.mjs",
+    "convert": "node scripts/convert-wordnet-to-lino.mjs",
+    "extract-nsm": "node scripts/extract-nsm-primes.mjs",
+    "discover": "node scripts/discover-semantic-primes.mjs",
+    "discover:with-stop-words": "node scripts/discover-semantic-primes.mjs --use-default-stop-words",
+    "test": "node tests/test-all.mjs",
+    "test:discovery": "node tests/test-discovery.mjs",
+    "test:nsm": "node tests/test-nsm-primes.mjs",
+    "test:source": "node tests/test-source-data.mjs",
+    "all": "npm run download && npm run convert && npm run extract-nsm && npm run discover && npm run test"
+  },
+  "keywords": [
+    "semantic-primes",
+    "wordnet",
+    "nsm",
+    "links-notation"
+  ],
+  "license": "Unlicense",
+  "dependencies": {
+    "links-notation": "^0.12.0"
+  }
+}
