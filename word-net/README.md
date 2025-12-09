@@ -12,6 +12,8 @@ word-net/
 │   ├── extract-nsm-primes.mjs       # Extract NSM primes
 │   ├── discover-semantic-primes.mjs # Discover primes algorithmically
 │   └── semantic-primes.mjs          # NSM primes definitions module
+├── examples/             # Example scripts demonstrating use-m pattern
+│   └── parse-lino-with-use-m.mjs    # Example: parse .lino files with use-m
 ├── experiments/          # Development experiments (kept for code reuse)
 │   ├── analyze-entity.mjs     # Analyze why specific words are primes
 │   └── trace-circularity.mjs  # Trace definition chain circularity
@@ -53,7 +55,11 @@ This allows comparison between theoretically-derived primes (NSM) and algorithmi
 
 - Node.js 18+
 
-All scripts use only Node.js built-in modules - no external dependencies or package installation required.
+## No Package Manager Required
+
+This project **does not use package.json or npm**. All main scripts use only Node.js built-in modules.
+
+For optional functionality like parsing .lino files, we provide examples using [use-m](https://github.com/link-foundation/use-m) to dynamically load packages at runtime without any installation step.
 
 ## Usage
 
@@ -114,6 +120,43 @@ node scripts/extract-nsm-primes.mjs && \
 node scripts/discover-semantic-primes.mjs && \
 node tests/test-all.mjs
 ```
+
+## Example: Using use-m to Parse Links Notation
+
+The `examples/` directory demonstrates how to use [use-m](https://github.com/link-foundation/use-m) to dynamically load npm packages without package.json:
+
+```bash
+node examples/parse-lino-with-use-m.mjs [input-file.lino]
+```
+
+This example shows how to:
+- Load the `links-notation` package at runtime using use-m
+- Parse .lino files back into structured data
+- Work without any `npm install` or `package.json`
+
+**How it works:**
+
+The use-m pattern allows dynamic loading of npm packages:
+
+```javascript
+// Load use-m (works in Node.js, browsers, Deno, Bun)
+const { use } = eval(await (await fetch('https://unpkg.com/use-m/use.js')).text());
+
+// Dynamically import any npm package - no installation needed!
+const linoModule = await use('links-notation');
+const LinoParser = linoModule.Parser;
+
+// Use the package normally
+const parser = new LinoParser();
+const result = parser.parse(linksNotationContent);
+```
+
+This approach eliminates the need for:
+- ✗ package.json
+- ✗ npm install
+- ✗ node_modules directory
+
+Perfect for self-contained scripts and cross-platform code!
 
 ## Output Format
 
