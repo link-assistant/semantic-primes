@@ -263,7 +263,7 @@ async function main() {
 
   if (!existsSync(WORDNET_FILE)) {
     console.error(`Error: WordNet data file not found: ${WORDNET_FILE}`);
-    console.error('Please run "npm run download" first to download the data.');
+    console.error('Please run "node scripts/download.mjs" first to download the data.');
     process.exit(1);
   }
 
