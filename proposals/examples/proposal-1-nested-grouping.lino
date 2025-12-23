@@ -1,0 +1,113 @@
+// Proposal 1: Nested Grouping by Prime
+// All information about a prime is grouped together using nested parentheses
+// This is valid Links Notation using n-tuple sequences
+
+// === Substantives ===
+
+(i
+  (isa semantic_prime)
+  (category substantives)
+  (allolex me)
+  (synsets
+    (oewn_14665575_n (definition "a nonmetallic element belonging to the halogens") (pos n) (ili i113951))
+    (oewn_13764713_n (definition "the smallest whole number or a numeral representing this number") (pos n) (ili i109093))
+    (oewn_06845083_n (definition "the 9th letter of the Roman alphabet") (pos n) (ili i72394))
+    (oewn_02193977_s (definition "used of a single unit or thing; not two or more") (pos a) (ili i12006))
+    (oewn_09115069_n (definition "a state in New England with capital Augusta") (pos n) (ili i84409))
+    (oewn_02805493_a (definition "(used as a combining form) relating to — of or by or to or from or for — the self") (pos a) (ili i15818))
+    (oewn_05683445_n (definition "your consciousness of your own identity") (pos n) (ili i66742))
+    (oewn_09628155_n (definition "a person considered as a unique individual") (pos n) (ili i87150))))
+
+(you
+  (isa semantic_prime)
+  (category substantives))
+
+(someone
+  (isa semantic_prime)
+  (category substantives)
+  (allolex person)
+  (synsets
+    (oewn_00007846_n (definition "a human being; person, singular, assertive existential pronoun") (pos n) (ili i35562))
+    (oewn_05224944_n (definition "a human body (usually including the clothing)") (pos n) (ili i64384))
+    (oewn_06337790_n (definition "a grammatical category used in the classification of pronouns") (pos n) (ili i69726))))
+
+(people
+  (isa semantic_prime)
+  (category substantives)
+  (synsets
+    (oewn_07958392_n (definition "(plural) any group of human beings (men or women or children) collectively") (pos n) (ili i79059))
+    (oewn_08177175_n (definition "the body of citizens of a state or country") (pos n) (ili i80034))
+    (oewn_07987588_n (definition "members of a family line") (pos n) (ili i79202))
+    (oewn_08197108_n (definition "the common people generally") (pos n) (ili i80128))
+    (oewn_00452416_v (definition "fill with people") (pos v) (ili i23978))
+    (oewn_02656935_v (definition "furnish with people") (pos v) (ili i34921))))
+
+(something
+  (isa semantic_prime)
+  (category substantives)
+  (allolex thing)
+  (synsets
+    (oewn_13967020_n (definition "a special situation") (pos n) (ili i110218))
+    (oewn_00034778_n (definition "an action") (pos n) (ili i35596))
+    (oewn_05863569_n (definition "a special abstraction") (pos n) (ili i67639))
+    (oewn_04431353_n (definition "an artifact") (pos n) (ili i60191))))
+
+(body
+  (isa semantic_prime)
+  (category substantives)
+  (synsets
+    (oewn_05223633_n (definition "the entire physical structure of an organism (an animal, plant, or human being)") (pos n) (ili i64381))
+    (oewn_07981699_n (definition "a group of persons associated by some common tie or occupation and regarded as an entity") (pos n) (ili i79178))
+    (oewn_05225115_n (definition "a natural object consisting of a dead animal or person") (pos n) (ili i64385))
+    (oewn_09247818_n (definition "an individual 3-dimensional object that has mass") (pos n) (ili i85103))))
+
+// === Relational Substantives ===
+
+(kind
+  (isa semantic_prime)
+  (category relationalSubstantives)
+  (allolex sort)
+  (synsets
+    (oewn_01374976_a (definition "having or showing a tender and considerate and helpful nature") (pos a) (ili i7477))
+    (oewn_05847533_n (definition "a category of things distinguished by some common characteristic or quality") (pos n) (ili i67559))
+    (oewn_04753502_n (definition "an approximate definition or example") (pos n) (ili i61966))))
+
+(part
+  (isa semantic_prime)
+  (category relationalSubstantives)
+  (synsets
+    (oewn_13831419_n (definition "something determined in relation to something that includes it") (pos n) (ili i109475))
+    (oewn_03898588_n (definition "something less than the whole of a human artifact") (pos n) (ili i57017))
+    (oewn_09408804_n (definition "a portion of a natural object") (pos n) (ili i85946))))
+
+// === Determiners ===
+
+(this
+  (isa semantic_prime)
+  (category determiners))
+
+(the_same
+  (isa semantic_prime)
+  (category determiners)
+  (synsets
+    (oewn_02075880_a (definition "same in identity") (pos a) (ili i11339))
+    (oewn_02070074_a (definition "closely similar or comparable in kind or quality or quantity or degree") (pos a) (ili i11316))))
+
+(other
+  (isa semantic_prime)
+  (category determiners)
+  (allolex else))
+
+// === Evaluators ===
+
+(good
+  (isa semantic_prime)
+  (category evaluators)
+  (synsets
+    (oewn_01128305_a (definition "having desirable or positive qualities") (pos a) (ili i6140))))
+
+(bad
+  (isa semantic_prime)
+  (category evaluators)
+  (synsets
+    (oewn_01134269_a (definition "having undesirable or negative qualities") (pos a) (ili i6167))))

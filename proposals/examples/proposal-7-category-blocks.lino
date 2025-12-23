@@ -1,0 +1,145 @@
+// Proposal 7: Category Blocks with Prime Lists
+// Organizes by category first, then lists primes within each category
+// Synset definitions are kept in a separate lookup section
+
+// === PRIME DEFINITIONS BY CATEGORY ===
+
+(substantives contains
+  (i (allolex me) (synsets oewn_14665575_n oewn_13764713_n oewn_06845083_n oewn_02193977_s oewn_05683445_n oewn_09628155_n))
+  (you)
+  (someone (allolex person) (synsets oewn_00007846_n oewn_05224944_n oewn_06337790_n))
+  (people (synsets oewn_07958392_n oewn_08177175_n oewn_07987588_n oewn_00452416_v oewn_02656935_v))
+  (something (allolex thing) (synsets oewn_13967020_n oewn_00034778_n oewn_05863569_n oewn_04431353_n))
+  (body (synsets oewn_05223633_n oewn_07981699_n oewn_05225115_n oewn_09247818_n)))
+
+(relationalSubstantives contains
+  (kind (allolex sort) (synsets oewn_01374976_a oewn_05847533_n oewn_04753502_n))
+  (part (synsets oewn_13831419_n oewn_03898588_n oewn_09408804_n)))
+
+(determiners contains
+  (this)
+  (the_same (synsets oewn_02075880_a oewn_02070074_a))
+  (other (allolex else)))
+
+(quantifiers contains
+  (one (synsets oewn_02202287_a))
+  (two (synsets oewn_02202504_a))
+  (some (synsets oewn_00122000_a))
+  (all (synsets oewn_00123716_a))
+  (much (allolex many))
+  (little (allolex few)))
+
+(evaluators contains
+  (good (synsets oewn_01128305_a))
+  (bad (synsets oewn_01134269_a)))
+
+(descriptors contains
+  (big (synsets oewn_01385458_a))
+  (small (synsets oewn_01387617_a)))
+
+(mentalPredicates contains
+  (think (synsets oewn_00694990_v))
+  (know (synsets oewn_00596644_v))
+  (want (synsets oewn_01830238_v))
+  (feel (synsets oewn_01773545_v))
+  (see (synsets oewn_02162485_v))
+  (hear (synsets oewn_02181401_v)))
+
+(speech contains
+  (say (synsets oewn_00956585_v))
+  (words (synsets oewn_06303737_n))
+  (true (synsets oewn_00683280_a)))
+
+(actionsEventsMovement contains
+  (do (synsets oewn_02581723_v))
+  (happen (synsets oewn_00339934_v))
+  (move (synsets oewn_01854282_v)))
+
+(time contains
+  (when (allolex time))
+  (now (synsets oewn_00030449_r))
+  (before (synsets oewn_00068917_r))
+  (after (synsets oewn_00075473_r))
+  (a_long_time)
+  (a_short_time)
+  (for_some_time)
+  (moment (synsets oewn_15287830_n)))
+
+(space contains
+  (where (allolex place))
+  (here (synsets oewn_00028161_r))
+  (above (synsets oewn_00124142_r))
+  (below (synsets oewn_00127369_r))
+  (far (synsets oewn_00106688_r))
+  (near (synsets oewn_00108725_r))
+  (side (synsets oewn_08660339_n))
+  (inside (synsets oewn_00076193_r))
+  (touch (synsets oewn_01220031_v)))
+
+(logicalConcepts contains
+  (not (synsets oewn_00025471_r))
+  (maybe (synsets oewn_00042605_r))
+  (can (synsets oewn_02594172_v))
+  (because (synsets oewn_06747583_n))
+  (if))
+
+(intensifierAugmentor contains
+  (very (synsets oewn_00009683_r))
+  (more (synsets oewn_00000951_r)))
+
+(similarity contains
+  (like (allolex as way) (synsets oewn_00067833_r)))
+
+// === SYNSET DEFINITIONS ===
+// Format: (synset_id definition pos ili)
+
+(synset_definitions
+  // Substantives - I
+  (oewn_14665575_n "a nonmetallic element belonging to the halogens" n i113951)
+  (oewn_13764713_n "the smallest whole number or a numeral representing this number" n i109093)
+  (oewn_06845083_n "the 9th letter of the Roman alphabet" n i72394)
+  (oewn_02193977_s "used of a single unit or thing; not two or more" a i12006)
+  (oewn_05683445_n "your consciousness of your own identity" n i66742)
+  (oewn_09628155_n "a person considered as a unique individual" n i87150)
+
+  // Substantives - someone
+  (oewn_00007846_n "a human being; person, singular, assertive existential pronoun" n i35562)
+  (oewn_05224944_n "a human body (usually including the clothing)" n i64384)
+  (oewn_06337790_n "a grammatical category used in the classification of pronouns" n i69726)
+
+  // Substantives - people
+  (oewn_07958392_n "(plural) any group of human beings (men or women or children) collectively" n i79059)
+  (oewn_08177175_n "the body of citizens of a state or country" n i80034)
+  (oewn_07987588_n "members of a family line" n i79202)
+  (oewn_00452416_v "fill with people" v i23978)
+  (oewn_02656935_v "furnish with people" v i34921)
+
+  // Substantives - something
+  (oewn_13967020_n "a special situation" n i110218)
+  (oewn_00034778_n "an action" n i35596)
+  (oewn_05863569_n "a special abstraction" n i67639)
+  (oewn_04431353_n "an artifact" n i60191)
+
+  // Substantives - body
+  (oewn_05223633_n "the entire physical structure of an organism" n i64381)
+  (oewn_07981699_n "a group of persons associated by some common tie" n i79178)
+  (oewn_05225115_n "a natural object consisting of a dead animal or person" n i64385)
+  (oewn_09247818_n "an individual 3-dimensional object that has mass" n i85103)
+
+  // Relational Substantives - kind
+  (oewn_01374976_a "having or showing a tender and considerate and helpful nature" a i7477)
+  (oewn_05847533_n "a category of things distinguished by some common characteristic" n i67559)
+  (oewn_04753502_n "an approximate definition or example" n i61966)
+
+  // Relational Substantives - part
+  (oewn_13831419_n "something determined in relation to something that includes it" n i109475)
+  (oewn_03898588_n "something less than the whole of a human artifact" n i57017)
+  (oewn_09408804_n "a portion of a natural object" n i85946)
+
+  // Determiners - the_same
+  (oewn_02075880_a "same in identity" a i11339)
+  (oewn_02070074_a "closely similar or comparable in kind or quality" a i11316)
+
+  // Evaluators
+  (oewn_01128305_a "having desirable or positive qualities" a i6140)
+  (oewn_01134269_a "having undesirable or negative qualities" a i6167))
