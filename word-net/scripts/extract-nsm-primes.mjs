@@ -270,19 +270,46 @@ function findPrimeMatches(entries, synsets, primes) {
 }
 
 /**
- * Convert matched primes to Links Notation format.
+ * Map short part of speech codes to full words.
+ */
+const POS_MAP = {
+  'n': 'noun',
+  'v': 'verb',
+  'a': 'adjective',
+  's': 'adjective satellite',
+  'r': 'adverb'
+};
+
+/**
+ * Map category keys to readable format with underscores for valid identifiers.
+ */
+const CATEGORY_ID_MAP = {
+  'substantives': 'substantives',
+  'relationalSubstantives': 'relational_substantives',
+  'determiners': 'determiners',
+  'quantifiers': 'quantifiers',
+  'evaluators': 'evaluators',
+  'descriptors': 'descriptors',
+  'mentalPredicates': 'mental_predicates',
+  'speech': 'speech',
+  'actionsEventsMovement': 'actions_events_movement',
+  'locationExistenceSpecification': 'location_existence_specification',
+  'possession': 'possession',
+  'lifeAndDeath': 'life_and_death',
+  'time': 'time',
+  'space': 'space',
+  'logicalConcepts': 'logical_concepts',
+  'intensifierAugmentor': 'intensifier_augmentor',
+  'similarity': 'similarity'
+};
+
+/**
+ * Convert matched primes to Links Notation format (natural language indented format).
  * @param {Array} matches - Matched semantic primes
  * @returns {string} Links Notation string
  */
 function toLinksNotation(matches) {
   const lines = [];
-
-  // Header comment
-  lines.push('// NSM Semantic Primes extracted from Open English WordNet 2024');
-  lines.push('// Based on Natural Semantic Metalanguage (NSM) theory by Anna Wierzbicka');
-  lines.push('// These are pre-defined primes from linguistic research');
-  lines.push('// Reference: Wierzbicka, A. (1996). Semantics: Primes and universals.');
-  lines.push('');
 
   // Group by category
   const byCategory = {};
@@ -293,49 +320,74 @@ function toLinksNotation(matches) {
     byCategory[match.category].push(match);
   }
 
+  // Collect all synsets to output after primes
+  const allSynsets = new Map();
+
   // Output each category
   for (const [category, primes] of Object.entries(byCategory)) {
-    lines.push(`// === ${formatCategoryName(category)} ===`);
+    const categoryId = CATEGORY_ID_MAP[category] || category;
+
+    // Add category as entity
+    lines.push(`${categoryId}:`);
+    lines.push(`  is a semantic prime category`);
+
+    // List all primes in this category
+    for (const prime of primes) {
+      const primeId = prime.prime.toLowerCase().replace(/[^a-z]/g, '_');
+      lines.push(`  includes ${primeId}`);
+    }
+
     lines.push('');
 
+    // Now add each prime as a separate entity
     for (const prime of primes) {
-      // Main prime entry
       const primeId = prime.prime.toLowerCase().replace(/[^a-z]/g, '_');
 
-      // Prime definition with category
-      lines.push(`(${primeId} isa semantic_prime)`);
-      lines.push(`(${primeId} category ${category})`);
+      lines.push(`${primeId}:`);
+      lines.push(`  is a semantic prime`);
+      lines.push(`  belongs to category ${categoryId}`);
 
-      // Allolexes if any
+      // Add alternative forms (allolexes)
       if (prime.allolexes.length > 0) {
         for (const allolex of prime.allolexes) {
           const allolexId = allolex.toLowerCase().replace(/[^a-z]/g, '_');
-          lines.push(`(${allolexId} allolex_of ${primeId})`);
+          lines.push(`  has alternative form ${allolexId}`);
         }
       }
 
-      // WordNet synset links
+      // Add references to word meanings (synsets)
       for (const wn of prime.wordnetMatches) {
         const synsetId = wn.synsetId.replace(/[^a-z0-9]/gi, '_');
-        lines.push(`(${primeId} wordnet_synset ${synsetId})`);
+        lines.push(`  has word meaning ${synsetId}`);
 
-        // Add definition as separate link
-        if (wn.definitions.length > 0) {
-          const defText = escapeForLino(wn.definitions[0]);
-          lines.push(`(${synsetId} definition "${defText}")`);
-        }
-
-        // Add part of speech
-        lines.push(`(${synsetId} pos ${wn.partOfSpeech})`);
-
-        // Add ILI (Inter-Lingual Index) if available
-        if (wn.ili) {
-          lines.push(`(${synsetId} ili "${wn.ili}")`);
+        // Collect synset data for later output
+        if (!allSynsets.has(synsetId)) {
+          allSynsets.set(synsetId, {
+            definition: wn.definitions.length > 0 ? wn.definitions[0] : null,
+            pos: wn.partOfSpeech,
+            ili: wn.ili
+          });
         }
       }
 
       lines.push('');
     }
+  }
+
+  // Now add all synset definitions
+  for (const [synsetId, data] of allSynsets) {
+    lines.push(`${synsetId}:`);
+    if (data.definition) {
+      lines.push(`  is defined as "${escapeForLino(data.definition)}"`);
+    }
+    if (data.pos) {
+      const fullPos = POS_MAP[data.pos] || data.pos;
+      lines.push(`  has part of speech ${fullPos}`);
+    }
+    if (data.ili) {
+      lines.push(`  has interlingual index ${data.ili}`);
+    }
+    lines.push('');
   }
 
   return lines.join('\n');

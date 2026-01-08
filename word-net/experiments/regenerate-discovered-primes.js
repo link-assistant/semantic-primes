@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 // Read the original file
-const content = fs.readFileSync('word-net/data/discovered-primes.lino', 'utf8');
+const content = fs.readFileSync('../data/discovered-primes.lino', 'utf8');
 
 const lines = content.split('\n');
 
@@ -172,7 +172,7 @@ output += `  contains ${lowConfidence.length} primes\n`;
 output += generatePrimeEntries(lowConfidence);
 
 // Write output
-fs.writeFileSync('word-net/data/discovered-primes-new.lino', output.trim() + '\n');
+fs.writeFileSync('../data/discovered-primes-new.lino', output.trim() + '\n');
 
 console.log('Generated discovered-primes-new.lino');
 console.log('Total primes:', primes.size);

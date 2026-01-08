@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 // Read the original file
-const content = fs.readFileSync('word-net/data/nsm-primes.lino', 'utf8');
+const content = fs.readFileSync('../data/nsm-primes.lino', 'utf8');
 
 // Parse the original format which is triplets in parentheses
 // Format: (subject predicate object)
@@ -182,7 +182,7 @@ for (const [synsetId, data] of synsets) {
 }
 
 // Write output
-fs.writeFileSync('word-net/data/nsm-primes-new.lino', output.trim() + '\n');
+fs.writeFileSync('../data/nsm-primes-new.lino', output.trim() + '\n');
 
 console.log('Generated nsm-primes-new.lino');
 console.log('Total primes:', primes.size);

@@ -2,7 +2,7 @@ const { Parser } = require('links-notation');
 const fs = require('fs');
 
 const parser = new Parser();
-const content = fs.readFileSync('word-net/data/wordnet-source-new.lino', 'utf8');
+const content = fs.readFileSync('../data/wordnet-source-new.lino', 'utf8');
 
 // Take first 10000 lines to test format validity
 const sample = content.split('\n').slice(0, 10000).join('\n');

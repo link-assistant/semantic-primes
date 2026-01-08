@@ -2,8 +2,8 @@ const fs = require('fs');
 const readline = require('readline');
 
 async function regenerate() {
-  const inputPath = 'word-net/data/wordnet-source.lino';
-  const outputPath = 'word-net/data/wordnet-source-new.lino';
+  const inputPath = '../data/wordnet-source.lino';
+  const outputPath = '../data/wordnet-source-new.lino';
 
   // Create read stream
   const input = fs.createReadStream(inputPath, 'utf8');

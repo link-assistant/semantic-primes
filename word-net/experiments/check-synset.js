@@ -2,7 +2,7 @@ const { Parser } = require('links-notation');
 const fs = require('fs');
 
 const parser = new Parser();
-const content = fs.readFileSync('word-net/data/nsm-primes-new.lino', 'utf8');
+const content = fs.readFileSync('../data/nsm-primes-new.lino', 'utf8');
 
 const result = parser.parse(content);
 

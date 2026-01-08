@@ -2,7 +2,7 @@ const { Parser } = require('links-notation');
 const fs = require('fs');
 
 const parser = new Parser();
-const content = fs.readFileSync('word-net/data/wordnet-source-new.lino', 'utf8');
+const content = fs.readFileSync('../data/wordnet-source-new.lino', 'utf8');
 
 console.log('File size:', (content.length / 1024 / 1024).toFixed(2), 'MB');
 console.log('Line count:', content.split('\n').length);

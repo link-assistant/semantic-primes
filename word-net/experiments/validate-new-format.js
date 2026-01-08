@@ -1,8 +1,10 @@
 const { Parser } = require('links-notation');
 const fs = require('fs');
+const path = require('path');
 
 const parser = new Parser();
-const content = fs.readFileSync('word-net/data/nsm-primes-new.lino', 'utf8');
+const dataDir = path.join(__dirname, '..', 'data');
+const content = fs.readFileSync(path.join(dataDir, 'nsm-primes.lino'), 'utf8');
 
 console.log('File size:', content.length, 'bytes');
 console.log('Line count:', content.split('\n').length);

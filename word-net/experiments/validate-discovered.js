@@ -2,7 +2,7 @@ const { Parser } = require('links-notation');
 const fs = require('fs');
 
 const parser = new Parser();
-const content = fs.readFileSync('word-net/data/discovered-primes-new.lino', 'utf8');
+const content = fs.readFileSync('../data/discovered-primes-new.lino', 'utf8');
 
 console.log('File size:', content.length, 'bytes');
 console.log('Line count:', content.split('\n').length);

@@ -4,7 +4,7 @@ const fs = require('fs');
 const parser = new Parser();
 
 // Test the original nsm-primes format
-const original = fs.readFileSync('word-net/data/nsm-primes.lino', 'utf8');
+const original = fs.readFileSync('../data/nsm-primes.lino', 'utf8');
 
 console.log("Testing first 1500 chars of original nsm-primes.lino:\n");
 console.log(original.slice(0, 1500));
