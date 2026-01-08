@@ -185,67 +185,52 @@ async function convertToLino(filePath, outputPath) {
   console.log(`  Synsets: ${synsets.length}`);
   console.log(`  Lexical entries: ${entries.length}`);
 
-  // Generate Links Notation output
+  // Map short part of speech codes to full words
+  const posMap = {
+    'n': 'noun',
+    'v': 'verb',
+    'a': 'adjective',
+    's': 'adjective satellite',
+    'r': 'adverb'
+  };
+
+  // Generate Links Notation output (natural language indented format)
   console.log('\nGenerating Links Notation output...');
 
   const lines = [];
 
-  // Header
-  lines.push('// Open English WordNet 2024 - Source Data');
-  lines.push('// Converted from XML to Links Notation format');
-  lines.push('// Source: https://en-word.net/ (CC BY 4.0)');
-  lines.push(`// Generated: ${new Date().toISOString()}`);
-  lines.push(`// Total synsets: ${synsets.length}`);
-  lines.push(`// Total lexical entries: ${entries.length}`);
+  // Header section
+  lines.push('synset_collection:');
+  lines.push('  is a collection of word senses from Open English WordNet 2024');
+  lines.push(`  contains ${synsets.length} synsets`);
+  lines.push(`  contains ${entries.length} lexical entries`);
   lines.push('');
 
-  // Synsets section
-  lines.push('// === SYNSETS ===');
-  lines.push('');
-
+  // Write synsets
   for (const synset of synsets) {
     const synsetId = synset.id.replace(/[^a-z0-9]/gi, '_');
 
-    lines.push(`(${synsetId} isa synset)`);
-    lines.push(`(${synsetId} pos ${synset.partOfSpeech})`);
+    lines.push(`${synsetId}:`);
+    lines.push('  is a synset');
+
+    if (synset.partOfSpeech) {
+      const fullPos = posMap[synset.partOfSpeech] || synset.partOfSpeech;
+      lines.push(`  has part of speech ${fullPos}`);
+    }
 
     if (synset.ili) {
-      lines.push(`(${synsetId} ili "${synset.ili}")`);
+      lines.push(`  has interlingual index ${synset.ili}`);
     }
 
     for (const def of synset.definitions) {
-      lines.push(`(${synsetId} definition "${escapeForLino(def)}")`);
+      lines.push(`  is defined as "${escapeForLino(def)}"`);
     }
 
     for (const ex of synset.examples) {
-      lines.push(`(${synsetId} example "${escapeForLino(ex)}")`);
+      lines.push(`  has example "${escapeForLino(ex)}"`);
     }
 
     lines.push('');
-  }
-
-  // Lexical entries section
-  lines.push('// === LEXICAL ENTRIES ===');
-  lines.push('');
-
-  for (const entry of entries) {
-    for (const lemma of entry.lemmas) {
-      const lemmaId = lemma.form.toLowerCase().replace(/[^a-z0-9]/gi, '_');
-
-      // Link lemma to synsets
-      for (const synsetId of entry.synsets) {
-        const synsetIdNorm = synsetId.replace(/[^a-z0-9]/gi, '_');
-        lines.push(`(${lemmaId} sense ${synsetIdNorm})`);
-      }
-
-      // Add written form and POS if not already implied
-      if (lemma.form !== lemmaId) {
-        lines.push(`(${lemmaId} written_form "${escapeForLino(lemma.form)}")`);
-      }
-      if (lemma.pos) {
-        lines.push(`(${lemmaId} pos ${lemma.pos})`);
-      }
-    }
   }
 
   // Write output

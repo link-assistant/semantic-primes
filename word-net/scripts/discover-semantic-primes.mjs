@@ -497,61 +497,55 @@ function calculatePrimeScore(word, sccSize, hasSelfLoop, refCount, isSelfRef, is
 }
 
 /**
- * Convert discovered primes to Links Notation format.
+ * Map short part of speech codes to full words.
+ */
+const POS_MAP = {
+  'n': 'noun',
+  'v': 'verb',
+  'a': 'adjective',
+  's': 'adjective satellite',
+  'r': 'adverb'
+};
+
+/**
+ * Convert discovered primes to Links Notation format (natural language indented format).
  */
 function toLinksNotation(primes) {
   const lines = [];
 
-  lines.push('// Semantic Primes discovered algorithmically from Open English WordNet 2024');
-  lines.push('// Method: Tarjan\'s algorithm for Strongly Connected Components (SCCs)');
-  lines.push('//');
-  lines.push('// A semantic prime is a word that cannot be defined without eventually');
-  lines.push('// referring back to itself (directly or through other words).');
-  lines.push('//');
-  lines.push('// Words in the same SCC form mutual circular definitions - they can all');
-  lines.push('// reach each other through definition chains, making them all semantic primes.');
-  lines.push('//');
-  lines.push(`// Generated: ${new Date().toISOString()}`);
-  lines.push(`// Total semantic primes discovered: ${primes.length}`);
-  lines.push('');
-
   // Group by confidence score ranges
   const highConfidence = primes.filter(p => p.primeScore >= 80);
   const mediumConfidence = primes.filter(p => p.primeScore >= 50 && p.primeScore < 80);
-  const lowerConfidence = primes.filter(p => p.primeScore >= 30 && p.primeScore < 50);
-  const candidates = primes.filter(p => p.primeScore < 30);
+  const lowConfidence = primes.filter(p => p.primeScore < 50);
 
-  lines.push('// === HIGH CONFIDENCE PRIMES (score >= 80) ===');
-  lines.push(`// Count: ${highConfidence.length}`);
+  // Add high confidence section
+  lines.push(`high_confidence_primes:`);
+  lines.push(`  is a category of discovered primes`);
+  lines.push(`  requires minimum score 80`);
+  lines.push(`  contains ${highConfidence.length} primes`);
   lines.push('');
   for (const p of highConfidence) {
     addPrimeToLino(lines, p);
   }
 
-  lines.push('');
-  lines.push('// === MEDIUM CONFIDENCE PRIMES (50 <= score < 80) ===');
-  lines.push(`// Count: ${mediumConfidence.length}`);
+  // Add medium confidence section
+  lines.push(`medium_confidence_primes:`);
+  lines.push(`  is a category of discovered primes`);
+  lines.push(`  requires minimum score 50`);
+  lines.push(`  contains ${mediumConfidence.length} primes`);
   lines.push('');
   for (const p of mediumConfidence) {
     addPrimeToLino(lines, p);
   }
 
+  // Add low confidence section
+  lines.push(`low_confidence_primes:`);
+  lines.push(`  is a category of discovered primes`);
+  lines.push(`  requires score below 50`);
+  lines.push(`  contains ${lowConfidence.length} primes`);
   lines.push('');
-  lines.push('// === LOWER CONFIDENCE PRIMES (30 <= score < 50) ===');
-  lines.push(`// Count: ${lowerConfidence.length}`);
-  lines.push('');
-  for (const p of lowerConfidence) {
+  for (const p of lowConfidence) {
     addPrimeToLino(lines, p);
-  }
-
-  if (candidates.length > 0) {
-    lines.push('');
-    lines.push('// === CANDIDATES (score < 30) ===');
-    lines.push(`// Count: ${candidates.length}`);
-    lines.push('');
-    for (const p of candidates) {
-      addPrimeToLino(lines, p);
-    }
   }
 
   return lines.join('\n');
@@ -560,42 +554,47 @@ function toLinksNotation(primes) {
 function addPrimeToLino(lines, prime) {
   const wordId = prime.word.replace(/[^a-z0-9]/gi, '_');
 
-  lines.push(`(${wordId} isa discovered_semantic_prime)`);
-  lines.push(`(${wordId} prime_score ${prime.primeScore.toFixed(1)})`);
+  lines.push(`${wordId}:`);
+  lines.push(`  is a discovered semantic prime`);
 
-  if (prime.isInCycle) {
-    lines.push(`(${wordId} in_circular_definition true)`);
+  if (prime.primeScore !== null) {
+    lines.push(`  has prime score ${prime.primeScore.toFixed(1)}`);
   }
 
-  if (prime.sccSize > 1) {
-    lines.push(`(${wordId} scc_size ${prime.sccSize})`);
+  if (prime.isInCycle !== null) {
+    lines.push(`  ${prime.isInCycle ? 'is' : 'is not'} in circular definition`);
   }
 
-  if (prime.hasSelfLoop) {
-    lines.push(`(${wordId} has_self_loop true)`);
+  if (prime.sccSize !== null && prime.sccSize > 1) {
+    lines.push(`  has strongly connected component size ${prime.sccSize}`);
+  }
+
+  if (prime.hasSelfLoop !== null) {
+    lines.push(`  ${prime.hasSelfLoop ? 'has' : 'does not have'} self loop`);
   }
 
   if (prime.referenceCount) {
-    lines.push(`(${wordId} reference_count ${prime.referenceCount})`);
+    lines.push(`  has reference count ${prime.referenceCount}`);
   }
 
-  if (prime.isSelfReference) {
-    lines.push(`(${wordId} has_self_reference true)`);
+  if (prime.isSelfReference !== null) {
+    lines.push(`  ${prime.isSelfReference ? 'has' : 'does not have'} self reference`);
   }
 
   if (prime.definition) {
     const defText = escapeForLino(prime.definition.substring(0, 200));
-    lines.push(`(${wordId} definition "${defText}")`);
+    lines.push(`  is defined as "${defText}"`);
   }
 
   if (prime.partOfSpeech) {
-    lines.push(`(${wordId} pos ${prime.partOfSpeech})`);
+    const fullPos = POS_MAP[prime.partOfSpeech] || prime.partOfSpeech;
+    lines.push(`  has part of speech ${fullPos}`);
   }
 
   // Add sample SCC members if in a multi-word SCC
   if (prime.sccSample && prime.sccSample.length > 1) {
     const sample = prime.sccSample.slice(0, 5).join(', ');
-    lines.push(`(${wordId} scc_sample "${escapeForLino(sample)}")`);
+    lines.push(`  has sample related words "${escapeForLino(sample)}"`);
   }
 
   lines.push('');

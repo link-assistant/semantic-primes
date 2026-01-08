@@ -1,0 +1,20 @@
+{
+  "name": "word-net",
+  "version": "1.0.0",
+  "description": "This directory contains scripts to extract and discover semantic primes from Open English WordNet.",
+  "main": "index.js",
+  "directories": {
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "links-notation": "^0.13.0"
+  }
+}
